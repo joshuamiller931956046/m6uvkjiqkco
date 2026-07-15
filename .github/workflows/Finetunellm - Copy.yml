@@ -1,0 +1,559 @@
+name: Foundation workflow
+
+on:
+  push:
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      
+  workflow_dispatch:
+    inputs:
+      pretrained_model_path:
+        description: 'Path or identifier of the base pretrained transformer architecture to initialize weights from before commencing supervised instruction tuning on downstream task-specific corpora'
+        required: true
+        default: 'Claude-Opus'
+        type: choice
+        options:
+          - Claude-Opus
+          - facebook/opt-125m
+          - gpt2
+          - EleutherAI/pythia-410m
+          - bigscience/bloom-560m
+      training_dataset_identifier:
+        description: 'HuggingFace dataset repository name or local path containing the structured prompt-completion pairs used for gradient-based parameter optimization during the supervised fine-tuning phase'
+        required: true
+        default: 'alpaca_gpt4_en'
+      maximum_training_epochs:
+        description: 'Total number of complete passes through the entire training dataset during the optimization loop, higher values may improve convergence but risk overfitting on small datasets'
+        required: true
+        default: '1000'
+      initial_learning_rate_value:
+        description: 'Base learning rate scalar for the AdamW optimizer controlling the step size magnitude during stochastic gradient descent parameter updates across all trainable LoRA adapter layers'
+        required: true
+        default: '2e-4'
+      batch_size_per_device:
+        description: 'Number of training samples processed simultaneously on each GPU accelerator before computing the aggregated gradient for a single optimization step'
+        required: true
+        default: '1'
+      gradient_accumulation_steps_count:
+        description: 'Number of forward-backward passes to accumulate gradients before performing a single optimizer step, effectively multiplying the per-device batch size without additional memory overhead'
+        required: true
+        default: '4'
+      lora_adapter_rank_dimension:
+        description: 'Rank dimension of the low-rank decomposition matrices injected into attention projection layers, higher rank increases parameter count and representational capacity of the adapter'
+        required: true
+        default: '8'
+      warmup_ratio_fraction:
+        description: 'Fraction of total training steps during which the learning rate linearly increases from zero to the base value before cosine annealing schedule begins'
+        required: true
+        default: '0.1'
+      max_sequence_cutoff_length:
+        description: 'Maximum token sequence length retained during preprocessing, sequences exceeding this threshold are truncated from the right to conserve GPU memory during training'
+        required: true
+        default: '512'
+      random_seed_value:
+        description: 'Fixed integer seed for all pseudo-random number generators to ensure fully reproducible training runs across different execution environments and hardware configurations'
+        required: true
+        default: '42'
+
+permissions:
+  contents: read
+  
+jobs:
+  foundation:
+    name: 🧱 Foundation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Initialize pipeline
+        run: echo "✅ Foundation check completed"
+
+  source-audit:
+    name: 🔎 Source Audit
+    needs: foundation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit source state
+        run: echo "✅ Source audit completed"
+
+  config-verify:
+    name: ⚙️ Config Verify
+    needs: foundation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify configuration
+        run: echo "✅ Configuration verified"
+
+  runtime-prepare:
+    name: 🚀 Runtime Prepare
+    needs: foundation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare runtime
+        run: echo "✅ Runtime prepared"
+
+  source-audit-core:
+    name: 🔎 Source Audit Core
+    needs: source-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Complete source audit core
+        run: echo "✅ Source audit core completed"
+
+  source-audit-edge:
+    name: 🔎 Source Audit Edge
+    needs: source-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Complete source audit edge
+        run: echo "✅ Source audit edge completed"
+
+  config-policy:
+    name: 🛡️ Config Policy
+    needs: config-verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate config policy
+        run: echo "✅ Config policy validated"
+
+  runtime-core:
+    name: 🚀 Runtime Core
+    needs: runtime-prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate runtime core
+        run: echo "✅ Runtime core validated"
+
+  runtime-edge:
+    name: 🌐 Runtime Edge
+    needs: runtime-prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate runtime edge
+        run: echo "✅ Runtime edge validated"
+
+  dispatch-gate:
+    name: 🚪 Dispatch Gate
+    needs: [source-audit-core, source-audit-edge, config-policy, runtime-core, runtime-edge]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authorize deployment batches
+        run: echo "✅ Dispatch gate approved"
+
+  gate-north:
+    name: 🧭 Gate North
+    needs: dispatch-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authorize north lane
+        run: echo "✅ North lane authorized"
+
+  north-cache:
+    name: 💾 North Cache
+    needs: gate-north
+    runs-on: windows-latest
+    steps:
+      - name: Build cache
+        run: echo "✅ Done"
+
+  north-index:
+    name: 📚 North Index
+    needs: gate-north
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build index
+        run: echo "✅ Done"
+
+  gate-north-ready:
+    name: ✅ North Ready Gate
+    needs: [north-cache, north-index]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve north batch
+        run: echo "✅ North batch ready"
+
+  gate-east:
+    name: 🧭 Gate East
+    needs: dispatch-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authorize east lane
+        run: echo "✅ East lane authorized"
+
+  east-index:
+    name: 📚 East Index
+    needs: gate-east
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build index
+        run: echo "✅ Done"
+
+  east-cache:
+    name: 💾 East Cache
+    needs: gate-east
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm cache
+        run: echo "✅ Done"
+
+  east-security:
+    name: 🔐 East Security
+    needs: east-index
+    runs-on: macos-latest
+    steps:
+      - name: Validate security
+        run: echo "✅ Done"
+
+  east-routing:
+    name: 🛰️ East Routing
+    needs: east-cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify routing
+        run: echo "✅ Done"
+
+  east-permission:
+    name: 🪪 East Permission
+    needs: [east-security, east-routing]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate permissions
+        run: echo "✅ Done"
+
+  gate-east-ready:
+    name: ✅ East Ready Gate
+    needs: east-permission
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve east batch
+        run: echo "✅ East batch ready"
+
+  gate-south:
+    name: 🧭 Gate South
+    needs: dispatch-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authorize south lane
+        run: echo "✅ South lane authorized"
+
+  south-health:
+    name: 🩺 South Health
+    needs: gate-south
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check health
+        run: echo "✅ Done"
+
+  south-metadata:
+    name: 🧾 South Metadata
+    needs: south-health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate metadata
+        run: echo "✅ Done"
+
+  south-package:
+    name: 📦 South Package
+    needs: south-metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare package
+        run: echo "✅ Done"
+
+  gate-south-ready:
+    name: ✅ South Ready Gate
+    needs: south-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve south batch
+        run: echo "✅ South batch ready"
+
+  gate-west:
+    name: 🧭 Gate West
+    needs: dispatch-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authorize west lane
+        run: echo "✅ West lane authorized"
+
+  west-scan:
+    name: 🔍 West Scan
+    needs: gate-west
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run scan
+        run: echo "✅ Done"
+
+  west-cache:
+    name: 💾 West Cache
+    needs: gate-west
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm cache
+        run: echo "✅ Done"
+
+  west-security:
+    name: 🔐 West Security
+    needs: west-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate security
+        run: echo "✅ Done"
+
+  west-policy:
+    name: 🛡️ West Policy
+    needs: west-cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate policy
+        run: echo "✅ Done"
+
+  west-runtime:
+    name: ⚙️ West Runtime
+    needs: west-security
+    runs-on: windows-latest
+    steps:
+      - name: Validate runtime
+        run: echo "✅ Done"
+
+  west-routing:
+    name: 🛰️ West Routing
+    needs: west-policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify routing
+        run: echo "✅ Done"
+
+  west-package:
+    name: 📦 West Package
+    needs: [west-runtime, west-routing]
+    runs-on: macos-latest
+    steps:
+      - name: Prepare package
+        run: echo "✅ Done"
+
+  west-release:
+    name: 🚀 West Release
+    needs: west-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finalize release
+        run: echo "✅ Done"
+
+  gate-west-ready:
+    name: ✅ West Ready Gate
+    needs: west-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve west batch
+        run: echo "✅ West batch ready"
+
+  thunder-hawk:
+    name: 🦅 Thunder Hawk
+    needs: gate-north-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+          
+
+  neon-dragon:
+    name: 🐉 Neon Dragon
+    needs: gate-north-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+          
+
+  cyber-panther:
+    name: 🐆 Cyber Panther
+    needs: gate-north-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  phantom-wolf:
+    name: 🐺 Phantom Wolf
+    needs: gate-north-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+          
+  storm-tiger:
+    name: 🐅 Storm Tiger
+    needs: gate-north-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  blaze-falcon:
+    name: 🔥 Blaze Falcon
+    needs: gate-east-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+          
+
+  shadow-lynx:
+    name: 🐈 Shadow Lynx
+    needs: gate-east-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  cyber-cobra:
+    name: 🐍 Cyber Cobra
+    needs: gate-east-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+          
+  frost-eagle:
+    name: ❄️ Frost Eagle
+    needs: gate-east-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  storm-fox:
+    name: 🦊 Storm Fox
+    needs: gate-east-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  neon-shark:
+    name: 🦈 Neon Shark
+    needs: gate-south-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  phantom-bear:
+    name: 🐻 Phantom Bear
+    needs: gate-south-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  storm-stallion:
+    name: 🐎 Storm Stallion
+    needs: gate-south-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  cyber-viper:
+    name: 🐍 Cyber Viper
+    needs: gate-south-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+          
+  thunder-wolf:
+    name: ⚡ Thunder Wolf
+    needs: gate-south-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          echo "✅ Ready"
+
+  blaze-panther:
+    name: 🔥 Blaze Panther
+    needs: gate-west-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+           while true; do sleep 360; done
+          
+
+  frost-tiger:
+    name: ❄️ Frost Tiger
+    needs: gate-west-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          while true; do sleep 360; done
+          
+
+  neon-eagle:
+    name: 💚 Neon Eagle
+    needs: gate-west-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          while true; do sleep 360; done
+          
+
+  shadow-cobra:
+    name: 🖤 Shadow Cobra
+    needs: gate-west-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          while true; do sleep 360; done
+
+  phantom-falcon:
+    name: 👻 Phantom Falcon
+    needs: gate-west-ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute workload
+        run: |
+          while true; do sleep 360; done
+          
